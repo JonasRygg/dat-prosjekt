@@ -1,5 +1,7 @@
 package no.hvl.dat100.prosjekt.kontroll;
 
+import java.util.Random;
+
 import no.hvl.dat100.prosjekt.TODO;
 import no.hvl.dat100.prosjekt.kontroll.dommer.Regler;
 import no.hvl.dat100.prosjekt.kontroll.spill.Handling;
@@ -16,7 +18,7 @@ public class SydSpiller extends Spiller {
 
 	/**
 	 * Konstruktør.
-	 * 
+	 *
 	 * @param spiller
 	 *            posisjon for spilleren (nord eller syd).
 	 */
@@ -30,25 +32,46 @@ public class SydSpiller extends Spiller {
 	 * kan spilles). Dersom man ikke har lovlige kort å spille, trekker man om
 	 * man ikke allerede har trukket maks antall ganger. I så fall sier man
 	 * forbi.
-	 * 
+	 *
 	 * @param topp
 	 *            kort som ligg øverst på til-bunken.
 	 */
 	@Override
 	public Handling nesteHandling(Kort topp) {
+		// ArrayLister for de kortene vi har og kan spille
+		Kort[] hand = getHand().getAllekort();
+		KortSamling lovlige = new KortSamling();
 
-		KortSamling hand = getHand();
-
-		for (Kort kort : hand.getAllekort()) {
-			if (kort.getVerdi() == topp.getVerdi() || kort.getFarge() == topp.getFarge() || kort.getVerdi() == 8) {
-				return new Handling(HandlingsType.LEGGNED, kort);
+		// Gå igjennom kort å finn ut hvilke som kan spilles
+		for (Kort k : hand) {
+			if (Regler.kanLeggeNed(k, topp)) {
+				lovlige.leggTil(k);
 			}
-			if (getAntallTrekk() < Regler.maksTrekk()) {
-				return  new Handling(HandlingsType.TREKK, null);
-			}
-
-
 		}
-		return  new Handling(HandlingsType.FORBI, null);
+
+		Kort spill = null;
+		Kort[] spillFra = null;
+
+		if (!lovlige.erTom()) {
+			spillFra = lovlige.getAllekort();
+		}
+
+		Handling handling = null;
+
+		// Spiller det første kortet av de lovlig kort kortene i hånden hvis det er i hvertfall et lovlig kort
+		// Hvis ikke vil man trekke maks 3 ganger eller til man får et kort man kan spille
+		if (spillFra != null) {
+			spill = spillFra[0];
+			handling = new Handling(HandlingsType.LEGGNED, spill);
+			// setAntallTrekk(0);
+
+		} else if (getAntallTrekk() < Regler.maksTrekk()) {
+			handling = new Handling(HandlingsType.TREKK, null);
+		} else {
+			handling = new Handling(HandlingsType.FORBI, null);
+			// setAntallTrekk(0);
+		}
+
+		return handling;
 	}
 }
